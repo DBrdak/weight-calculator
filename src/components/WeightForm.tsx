@@ -3,7 +3,7 @@ import { useState } from 'react'
 import MyTextInput from './MyTextInput'
 import * as Yup from 'yup';
 import { FormValues, LineItem } from '../models/LineItem';
-import { Button, Container, Table } from 'semantic-ui-react';
+import { Button, Container, Divider, Table } from 'semantic-ui-react';
 
 function WeightForm() {
   const [items, setItems] = useState<LineItem[]>([])
@@ -62,6 +62,8 @@ function WeightForm() {
           </Form>
         )}
       </Formik>
+
+      <Divider/>
 
       <Table celled  >
         <Table.Header>
