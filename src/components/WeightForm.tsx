@@ -77,7 +77,7 @@ function WeightForm() {
   }
 
   function drawTableHeader(page: any, table: any) {
-    const { x, y, width, height, numberOfRows, numberOfColumns, cellMargin } = table;
+    const { x, y, width, numberOfColumns, cellMargin } = table;
     const columnWidth = width / numberOfColumns;
   
     let currentY = y - cellMargin - 10;
@@ -98,7 +98,7 @@ function WeightForm() {
   }
 
   async function drawTableRows(page: any, table: any, pdfDoc: PDFDocument) {
-    const { x, y, width, height, numberOfRows, numberOfColumns, cellMargin } = table;
+    const { x, y, width, numberOfColumns, cellMargin } = table;
     const columnWidth = width / numberOfColumns;
   
     let currentY = y - cellMargin - 25;
