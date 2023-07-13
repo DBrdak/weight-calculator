@@ -24,7 +24,7 @@ function WeightForm() {
 
   const handleFormSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }): any => {
     const newItem = new LineItem(values)
-    const existingItemIndex = items.findIndex(item => item.name === newItem.name);
+    const existingItemIndex = items.findIndex(item => item.name.toLowerCase() === newItem.name.toLowerCase());
 
     if (existingItemIndex !== -1) {
       const updatedItems = [...items];
@@ -173,7 +173,7 @@ function WeightForm() {
           className='ui form' 
           onSubmit={handleSubmit}
           autoComplete='off'>
-            <MyTextInput name='name' placeholder='Asortyment'/>
+            <MyTextInput name='name' placeholder='Asortyment' />
             <MyTextInput name='weightBrutto' placeholder='Waga brutto'/>
             <MyTextInput name='containers' placeholder='Liczba pojemników'/>
             <MyTextInput name='pallets' placeholder='Liczba palet'/>

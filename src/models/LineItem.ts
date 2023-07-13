@@ -12,11 +12,18 @@ export class LineItem implements LineItem {
     this.name = init?.name!
     this.containers = init?.containers as number
     this.pallets = init?.pallets as number
-    this.weightBrutto = init?.weightBrutto as number
+    this.weightBrutto = round(init?.weightBrutto as number, 1)
 
-    this.weightNetto = this.weightBrutto - this.containers * 2 - this.pallets * 18
-    this.weightFV = Math.round(this.weightNetto * 9.95) / 10
+    this.weightNetto = round(this.weightBrutto - this.containers * 2 - this.pallets * 18, 1)
+    this.weightFV = round(this.weightNetto * 0.995, 1)
   }
+}
+
+function round(n: number, digits: number): number {
+  var multiplicator = Math.pow(10, digits);
+  n = +(parseFloat((n * multiplicator).toFixed(11)))
+  n = +(Math.round(n) / multiplicator).toFixed(digits)
+  return n;
 }
 
 export class FormValues {
