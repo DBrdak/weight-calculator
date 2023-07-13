@@ -73,7 +73,7 @@ function WeightForm() {
 
     const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
 
-    FileSaver.saveAs(pdfBlob, 'example.pdf');
+    FileSaver.saveAs(pdfBlob, `Wagi_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}.pdf`);
   }
 
   function drawTableHeader(page: any, table: any) {
