@@ -4,8 +4,9 @@ import MyTextInput from './MyTextInput'
 import * as Yup from 'yup';
 import { FormValues, LineItem } from '../models/LineItem';
 import { Button, Container, Divider, Table } from 'semantic-ui-react';
-import FileSaver from 'file-saver';
+import FileSaver from 'file-saver'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit'
 
 function WeightForm() {
   const [items, setItems] = useState<LineItem[]>([])
@@ -46,12 +47,15 @@ function WeightForm() {
   async function createFile() {
     const pdfDoc = await PDFDocument.create();
 
-    const page = pdfDoc.addPage();
+    const url = 'https://use.typekit.net/af/7f1b26/00000000000000007735a0ac/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3'
+    const fontBytes = await fetch(url).then(res => res.arrayBuffer());
 
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    pdfDoc.registerFontkit(fontkit)
+    const font = await pdfDoc.embedFont(fontBytes);
+    
+    const page = pdfDoc.addPage();
     page.setFont(font);
     page.setFontSize(12);
-
     page.setFontColor(rgb(0, 0, 0));
 
     const table = {
@@ -107,6 +111,7 @@ function WeightForm() {
     page.setFont(fontB)
 
     items.forEach((item) => {
+      item.name = replacePolishLetters(item.name)
       const rowValues = [
         item.name,
         item.weightBrutto.toString(),
@@ -161,6 +166,53 @@ function WeightForm() {
     await createFile()
   }
 
+  function handleLiDelete(item: LineItem): void {
+    setItems(items.filter((li) => li !== item))
+  }
+
+  function replacePolishLetters(word: string): string {
+    let replacedWord = "";
+  
+    for (let i = 0; i < word.length; i++) {
+      const currentChar = word[i];
+  
+      switch (currentChar) {
+        case "ś":
+          replacedWord += "s";
+          break;
+        case "ą":
+          replacedWord += "a";
+          break;
+        case "ę":
+          replacedWord += "e";
+          break;
+        case "ż":
+        case "ź":
+          replacedWord += "z";
+          break;
+        case "ć":
+          replacedWord += "c";
+          break;
+        case "ń":
+          replacedWord += "n";
+          break;
+        case "ł":
+          replacedWord += "l";
+          break;
+        case "ó":
+          replacedWord += "o";
+          break;
+        default:
+          replacedWord += currentChar;
+          break;
+      }
+    }
+  
+    return replacedWord;
+  }
+
+  // Dodać zmianę wagi FV w trakcie wprowadzania asortymentu
+
   return (
     <>
       <Formik
@@ -193,6 +245,7 @@ function WeightForm() {
             <Table.HeaderCell>Palety</Table.HeaderCell>
             <Table.HeaderCell>Waga Netto</Table.HeaderCell>
             {showFV ? <Table.HeaderCell>Waga FV</Table.HeaderCell> : null}
+            <Table.HeaderCell></Table.HeaderCell>
         </Table.Header>
 
         <Table.Body>
@@ -204,6 +257,7 @@ function WeightForm() {
                 <Table.Cell>{item.pallets}</Table.Cell>
                 <Table.Cell>{item.weightNetto}</Table.Cell>
                 {showFV ? <Table.Cell>{item.weightFV}</Table.Cell> : null}
+                <Table.Cell><Button negative circular icon='trash' size='mini' onClick={() => handleLiDelete(item)}/></Table.Cell>
               </Table.Row>
           ))}
         </Table.Body>
@@ -214,6 +268,7 @@ function WeightForm() {
           <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.pallets), 0)}</Table.Cell>
           <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.weightNetto), 0)}</Table.Cell>
           {showFV ? <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.weightFV), 0)}</Table.Cell> : null}
+          <Table.Cell></Table.Cell>
         </Table.Footer>
       </Table>
       <Container fluid style={{display: 'flex', justifyContent: 'space-between'}}>
@@ -228,3 +283,4 @@ function WeightForm() {
 }
 
 export default WeightForm
+
