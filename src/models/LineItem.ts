@@ -5,6 +5,7 @@ export interface LineItem {
   weightFV: number
   containers: number
   pallets: number
+  margin: number
 }
 
 export class LineItem implements LineItem {
@@ -13,9 +14,10 @@ export class LineItem implements LineItem {
     this.containers = init?.containers as number
     this.pallets = init?.pallets as number
     this.weightBrutto = round(init?.weightBrutto as number, 1)
+    this.margin = init!.margin
 
     this.weightNetto = round(this.weightBrutto - this.containers * 2 - this.pallets * 18, 1)
-    this.weightFV = round(this.weightNetto * 0.995, 1)
+    this.weightFV = round(this.weightNetto * (1 - this.margin * 0.01), 1)
   }
 }
 
@@ -31,4 +33,5 @@ export class FormValues {
   weightBrutto: number | string = ''
   containers: number | string = ''
   pallets: number | string = ''
+  margin: number = 0.5
 }

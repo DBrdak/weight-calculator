@@ -20,7 +20,8 @@ function WeightForm() {
     name: Yup.string().required('Asortyment wymagany'),
     containers: Yup.number().required('Liczba pojemników wymagana').moreThan(-1, 'Liczba pojemników musi być dodatnia'),
     weightBrutto: Yup.number().positive('Waga musi być dodatnia').required('Waga wymagana'),
-    pallets: Yup.number().required('Liczba palet wymagana').moreThan(-1, 'Liczba palet musi być dodatnia')
+    pallets: Yup.number().required('Liczba palet wymagana').moreThan(-1, 'Liczba palet musi być dodatnia'),
+    margin: Yup.number().required('Margines błędu wymagany').moreThan(-0.01, 'Margines błędu musi być dodatni')
   })
 
   const handleFormSubmit = (values: FormValues, { resetForm }: { resetForm: () => void }): any => {
@@ -211,7 +212,6 @@ function WeightForm() {
     return replacedWord;
   }
 
-  // Dodać zmianę wagi FV w trakcie wprowadzania asortymentu
 
   return (
     <>
@@ -229,6 +229,7 @@ function WeightForm() {
             <MyTextInput name='weightBrutto' placeholder='Waga brutto'/>
             <MyTextInput name='containers' placeholder='Liczba pojemników'/>
             <MyTextInput name='pallets' placeholder='Liczba palet'/>
+            <MyTextInput name='margin' placeholder='Margines błędu (%)' />
             <Button type='submit' content='Dodaj' positive/>
             <Button type='reset' content='Wyczyść' negative onClick={() => setItems([])} />
           </Form>
