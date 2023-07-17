@@ -17,7 +17,7 @@ export class LineItem implements LineItem {
     this.margin = init!.margin
 
     this.weightNetto = round(this.weightBrutto - this.containers * 2 - this.pallets * 18, 1)
-    this.weightFV = round(this.weightNetto * (1 - this.margin * 0.01), 1)
+    this.weightFV = round(this.weightNetto * (1 - this.margin * 0.01), 2)
   }
 }
 
