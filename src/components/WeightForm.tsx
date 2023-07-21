@@ -5,12 +5,14 @@ import * as Yup from 'yup';
 import { FormValues, LineItem } from '../models/LineItem';
 import { Button, Container, Divider, Table } from 'semantic-ui-react';
 import FileSaver from 'file-saver'
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, PDFFont, PDFPage, PDFPageDrawTextOptions, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit'
+import MyMath from '../extensions/MyMath';
 
 function WeightForm() {
   const [items, setItems] = useState<LineItem[]>([])
   const [showFV, setShowFV] = useState(false)
+  const [contractorForm, setContractorForm] = useState(false)
 
   const addItem = (newItem: LineItem) => {
     setItems([...items, newItem])
@@ -45,7 +47,7 @@ function WeightForm() {
     resetForm()
   }
 
-  async function createFile() {
+  async function createFile(header: string) {
     const pdfDoc = await PDFDocument.create();
 
     const url = 'https://use.typekit.net/af/7f1b26/00000000000000007735a0ac/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3'
@@ -59,9 +61,11 @@ function WeightForm() {
     page.setFontSize(12);
     page.setFontColor(rgb(0, 0, 0));
 
+    drawHeader(page, header, font);
+
     const table = {
       x: 50,
-      y: page.getHeight() - 50,
+      y: page.getHeight() - 70,
       width: page.getWidth() - 100,
       height: page.getHeight() - 100,
       numberOfRows: items.length + 1,
@@ -79,6 +83,21 @@ function WeightForm() {
     const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
 
     FileSaver.saveAs(pdfBlob, `Wagi_${new Date().toLocaleDateString()}_${new Date().toLocaleTimeString()}.pdf`);
+  }
+
+  function drawHeader(page: PDFPage, headerText: string, font: PDFFont): void {
+    const headerFontSize = 24; 
+    const centerX = (page.getWidth() / 2) - headerText.length * 5
+  
+    const drawOptions: PDFPageDrawTextOptions = {
+      x: centerX,
+      y: page.getHeight() - 30, 
+      size: headerFontSize, 
+      font: font, 
+      color: rgb(0, 0, 0),
+    };
+  
+    page.drawText(headerText, drawOptions);
   }
 
   function drawTableHeader(page: any, table: any) {
@@ -125,6 +144,13 @@ function WeightForm() {
   
       rowValues.forEach((value, columnIndex) => {
         const textX = x + cellMargin + columnWidth * columnIndex;
+
+        if(columnIndex === 0){
+          page.setFontSize(getFontSize(item.name))
+        } else {
+          page.setFontSize(12)
+        }
+
         page.drawText(value, { x: textX, y: currentY });
       });
   
@@ -150,6 +176,20 @@ function WeightForm() {
     });
   }
 
+  function getFontSize(name:string){
+    const length = name.length
+
+    if(length <= 10){
+      return 12
+    } else if(length > 10 && length <= 15) {
+      return 10
+    } else if(length > 15 && length <= 20) {
+      return 8
+    } else {
+      return 0
+    }
+  }
+
   function calculateSumRow(): string[] {
     const sumRow: number[] = Array(5).fill(0);
   
@@ -163,8 +203,8 @@ function WeightForm() {
     return sumRow.map((value) => value.toString());
   }
 
-  async function downloadTable(): Promise<void> {
-    await createFile()
+  async function downloadTable(contractor: string): Promise<void> {
+    await createFile(contractor)
   }
 
   function handleLiDelete(item: LineItem): void {
@@ -175,36 +215,36 @@ function WeightForm() {
     let replacedWord = "";
   
     for (let i = 0; i < word.length; i++) {
-      const currentChar = word[i];
+      const currentChar = word[i].toLowerCase();
   
       switch (currentChar) {
         case "ś":
-          replacedWord += "s";
+          replacedWord += i === 0 ? "S": 's'
           break;
         case "ą":
-          replacedWord += "a";
+          replacedWord += i === 0 ? "A": 'a';
           break;
         case "ę":
-          replacedWord += "e";
+          replacedWord += i === 0 ? 'E' : "e";
           break;
         case "ż":
         case "ź":
-          replacedWord += "z";
+          replacedWord += i === 0 ? 'Z' : "z";
           break;
         case "ć":
-          replacedWord += "c";
+          replacedWord += i === 0 ? 'C' : "c";
           break;
         case "ń":
-          replacedWord += "n";
+          replacedWord += i === 0 ? 'N' : "n";
           break;
         case "ł":
-          replacedWord += "l";
+          replacedWord += i === 0 ? 'L' : "l";
           break;
         case "ó":
-          replacedWord += "o";
+          replacedWord += i === 0 ? 'O' : "o";
           break;
         default:
-          replacedWord += currentChar;
+          replacedWord += i === 0 ? currentChar.toUpperCase() : currentChar.toLowerCase();
           break;
       }
     }
@@ -212,6 +252,10 @@ function WeightForm() {
     return replacedWord;
   }
 
+  function clearForm(): void {
+    setItems([])
+    setContractorForm(false)
+  }
 
   return (
     <>
@@ -231,7 +275,7 @@ function WeightForm() {
             <MyTextInput name='pallets' placeholder='Liczba palet'/>
             <MyTextInput name='margin' placeholder='Margines błędu (%)' />
             <Button type='submit' content='Dodaj' positive/>
-            <Button type='reset' content='Wyczyść' negative onClick={() => setItems([])} />
+            <Button type='reset' content='Wyczyść' negative onClick={() => clearForm()} />
           </Form>
         )}
       </Formik>
@@ -240,6 +284,7 @@ function WeightForm() {
 
       <Table celled  >
         <Table.Header>
+          <Table.Row>
             <Table.HeaderCell>Asortyment</Table.HeaderCell>
             <Table.HeaderCell>Waga Brutto</Table.HeaderCell>
             <Table.HeaderCell>Pojemniki</Table.HeaderCell>
@@ -247,6 +292,7 @@ function WeightForm() {
             <Table.HeaderCell>Waga Netto</Table.HeaderCell>
             {showFV ? <Table.HeaderCell>Waga FV</Table.HeaderCell> : null}
             <Table.HeaderCell></Table.HeaderCell>
+          </Table.Row>
         </Table.Header>
 
         <Table.Body>
@@ -262,18 +308,58 @@ function WeightForm() {
               </Table.Row>
           ))}
         </Table.Body>
-        <Table.Footer style={{backgroundColor: '#F4F4F4'}}>
-          <Table.Cell>Suma:</Table.Cell>
-          <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.weightBrutto), 0)}</Table.Cell>
-          <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.containers), 0)}</Table.Cell>
-          <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.pallets), 0)}</Table.Cell>
-          <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.weightNetto), 0)}</Table.Cell>
-          {showFV ? <Table.Cell>{items.reduce((accumulator, item) => accumulator + (+item.weightFV), 0)}</Table.Cell> : null}
-          <Table.Cell></Table.Cell>
-        </Table.Footer>
+
+  <Table.Footer style={{ backgroundColor: '#F4F4F4' }}>
+    <Table.Row>
+      <Table.Cell>Suma:</Table.Cell>
+      <Table.Cell>
+        {MyMath.round(
+          items.reduce((accumulator, item) => accumulator + +item.weightBrutto, 0),
+          1
+        )}
+      </Table.Cell>
+      <Table.Cell>
+        {items.reduce((accumulator, item) => accumulator + +item.containers, 0)}
+      </Table.Cell>
+      <Table.Cell>
+        {items.reduce((accumulator, item) => accumulator + +item.pallets, 0)}
+      </Table.Cell>
+      <Table.Cell>
+        {MyMath.round(
+          items.reduce((accumulator, item) => accumulator + +item.weightNetto, 0),
+          1
+        )}
+      </Table.Cell>
+      {showFV ? (
+        <Table.Cell>
+          {MyMath.round(
+            items.reduce((accumulator, item) => accumulator + +item.weightFV, 0),
+            2
+          )}
+        </Table.Cell>
+      ) : null}
+      <Table.Cell></Table.Cell>
+    </Table.Row>
+  </Table.Footer>
       </Table>
       <Container fluid style={{display: 'flex', justifyContent: 'space-between'}}>
-        <Button icon='save' color='blue' disabled={items.length <= 0} onClick={downloadTable}/>
+        <Button icon='save' color='blue' disabled={items.length <= 0} onClick={() => setContractorForm(!contractorForm)}/>
+        {contractorForm &&
+          <Formik
+          validationSchema={Yup.object({contractor: Yup.string().required("Nazwa kontrahenta wymagana")})}
+          initialValues={{contractor: ''}}
+          onSubmit={(x) => downloadTable(x.contractor)}>
+          {({handleSubmit, isSubmitting, errors}) => (
+            <Form
+            className='ui form'
+            onSubmit={handleSubmit}
+            autoComplete='off'>
+              <MyTextInput name='contractor' placeholder='Kontrahent' 
+              button={<Button icon='check' type='submit' positive />}/>
+            </Form>
+          )}
+        </Formik>
+        }
         <Button.Group >
           <Button icon='eye' positive disabled={showFV} onClick={() => setShowFV(true)}/>
           <Button icon='eye slash' negative disabled={!showFV} onClick={() => setShowFV(false)}/>
